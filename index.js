@@ -20,22 +20,6 @@ client.on('ready',()=>{
 })
 
 client.on('message',message=>{
-    if(draw)
-    {
-        message.channel.send("Game Drawn 0.5-0.5!")
-        players = []
-        white_turn=true
-        pgnString = ""
-        moveCount=0
-    }
-    if (checkmated)
-    {
-        message.channel.send("Decisive Game!")
-        players = []
-        white_turn=true
-        pgnString = ""
-        moveCount=0
-    }
     if (!message.content.startsWith(prefix) || message.author.bot) return
     
     const args = message.content.slice(prefix.length).trim().split(/ +/)
@@ -68,7 +52,7 @@ client.on('message',message=>{
             let opponent = message.author===players[0]?players[1]:players[0]
             status = gameClient.getStatus();
             legalMoves = Object.keys(status.notatedMoves)
-            //console.log(status)
+            console.log(status.isCheckmate)
             //console.log(legalMoves)
             if(legalMoves.includes(args[0]))
             {
@@ -84,10 +68,26 @@ client.on('message',message=>{
                     pgnString = pgnString+moveString
                 }
                 move = gameClient.move(args[0])
+                status = gameClient.getStatus()
                 draw = status.isRepetition || status.isStalemate
                 checkmated = status.isCheckmate
-                message.channel.send(`${opponent}, your opponent has played ${args[0]}`)
-                white_turn = !white_turn
+                // console.log("JERE",checkmated)
+                if(!(checkmated || draw))
+                {
+                    message.channel.send(`${opponent}, your opponent has played ${args[0]}`)
+                    white_turn = !white_turn
+                }
+                else
+                {
+                    white_turn=true
+                    pgnString=""
+                    moveCount=0
+                    gameClient.status = {}
+                    message.channel.send("CHECKMATED!")
+                    players = []
+                }
+                
+                
             }
             else
             {
@@ -108,7 +108,13 @@ client.on('message',message=>{
     }
 
     else if(command==="abort"){
+        white_turn=true
+        pgnString=""
+        moveCount=0
+        gameClient.status = {}
+        message.channel.send("Game Aborted.")
         players = []
+
     }
 
     else if(command==="analyze"){
