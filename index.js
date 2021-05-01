@@ -1,6 +1,7 @@
 const Discord = require("discord.js")
 const chess = require('chess');
 const process = require('process');
+const axios = require("axios")
 const ChessImageGenerator = require('chess-image-generator');
 const { prefix,token } = require("./config.json")
 
@@ -105,6 +106,11 @@ client.on('message',message=>{
     else if(command==="resign"){
         let opponent = message.author===players[0]?players[1]:players[0]
         message.channel.send(`${opponent} is victorious!`)
+        white_turn=true
+        pgnString=""
+        moveCount=0
+        gameClient.status = {}
+        players = []
     }
 
     else if(command==="abort"){
@@ -118,7 +124,16 @@ client.on('message',message=>{
     }
 
     else if(command==="analyze"){
-        message.channel.send("Here is a link to a lichess analysis board : ")
+        axios.post("https://lichess.org/api/import",{
+            pgn : pgnString
+        }).then(res =>{
+            console.log(res.data)
+            message.channel.send("Here is a link to a lichess analysis board : " + res.data.url)   
+        }).catch(err =>{
+            console.log()
+            message.channel.send("Error creating analysis board. Please try again later.")
+        })
+        
     }
     else if(command==="showposition")
     {
